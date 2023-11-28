@@ -1,0 +1,16 @@
+---
+database:
+  type: "postgres"
+  postgres:
+    # Username and password default to postgres/postgres. Port defaults to 5432. Grab connection string from RDS properties pane. 
+    connection_string: "postgres://[USERNAME]:[PASSWORD]@[CONNECTION_STRING]:[PORT]/postgres"
+  
+auth:
+  encrypt:
+    # Replace this with a randomly-generated string. (Ryan: or not!) Make sure to keep it safe!
+    secret_key: "[ENCRYPTION_SECRET_KEY]"
+   
+blockstore:
+  type: s3
+  s3:
+    region: us-east-1
