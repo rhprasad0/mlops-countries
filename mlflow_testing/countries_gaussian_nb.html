@@ -1,0 +1,144 @@
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="initial-scale=1,maximum-scale=1,user-scalable=no"
+    />
+    <title>
+      Ryan's map thing
+    </title>
+
+    <style>
+      html,
+      body,
+      #viewDiv {
+        padding: 0;
+        margin: 0;
+        height: 100%;
+        width: 100%;
+      }
+
+      #instruction {
+        z-index: 99;
+        position: absolute;
+        top: 15px;
+        left: 50%;
+        padding: 5px;
+        margin-left: -175px;
+        height: 50px;
+        width: 300px;
+        background: rgba(25, 25, 25, 0.8);
+        color: white;
+      }
+    </style>
+
+    <link
+      rel="stylesheet"
+      href="https://js.arcgis.com/4.27/esri/themes/light/main.css"
+    />
+    <script src="https://js.arcgis.com/4.27/"></script>
+
+    <script>
+      require(["esri/request", "esri/Map", "esri/views/SceneView", "esri/config"], (
+        esriRequest,
+        Map,
+        SceneView,
+        esriConfig
+      ) => {
+        
+        // API URL
+        const apiUrl =
+          "https://yw69cxkoi7.execute-api.us-east-1.amazonaws.com/Countries-Predictor?";
+
+        esriConfig.apiKey = "AAPKbc0d97fc27fb41c5a2d98a182e7e351crDWOeC8O_qR7Wj_DCh8I9qR2JUZy0CuB0VbwLE5nGXyZwiF-6a_mHlePbObU-DiI";
+        
+          // Create the Map
+        const map = new Map({
+          basemap: "arcgis-charted-territory"
+        });
+
+        // Create the MapView
+        const view = new SceneView({
+          container: "viewDiv",
+          map: map,
+          camera: {
+          position: {
+            x: -82.45843, //Longitude
+            y: 27.94752, //Latitude
+            z: 1000000 //Meters
+          },
+          tilt: 0
+          }
+        });
+
+
+        /*******************************************************************
+         * This click event sets generic content on the popup not tied to
+         * a layer, graphic, or popupTemplate. The location of the point is
+         * used as input to a reverse geocode method and the resulting
+         * address is printed to the popup content.
+         *******************************************************************/
+        view.popupEnabled = false;
+        view.on("click", (event) => {
+          // Get the coordinates of the click on the view
+          const lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
+          const lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
+
+          view.openPopup({
+            // Set the popup's title to the coordinates of the location
+            title: "Selected Coordinates: [" + lon + ", " + lat + "]",
+            location: event.mapPoint // Set the location of the popup to the clicked location
+          });
+
+          const params = {
+            location: event.mapPoint
+          };
+
+          // Create URLSearchParams and pass it into the esriRequest options query parameter.
+          // This can be a plain object or URLSearchParams object.
+          const urlSearchParams = new URLSearchParams({
+            
+          });
+
+          // Create a ReqeuestOptions object with the URLSearchParams as the query parameter.
+          // Other parameters can be specified if needed.
+          const options = {
+            query: urlSearchParams
+          };
+
+          makeRequest((apiUrl + "lon=" + lon + "&lat=" + lat), options);
+          
+          // Function to call esriRequest with async/await.
+          async function makeRequest(url, options) {
+            // Use try/catch for error handling.
+            try {
+              // Use async/await to wait for the response to return
+              // from the service.
+              const response = await esriRequest(url, options);
+              // When the response returns from the service, stringify the response to display
+              // the information in the Text Area component.
+              const responseJSON = JSON.stringify(response, null, 2);
+              const parsedJSON = JSON.parse(responseJSON);
+              view.popup.content = `Model prediction: ${JSON.stringify(parsedJSON.data.predictions)}`;
+            } catch (error) {
+              // If an error is returned in the response, display the error alongside the http status code.
+              view.popup.content = `${error.details.httpStatus} error: "${error.message}". URL: ${(apiUrl + "lon=" + lon + "&lat=" + lat)}`;
+              
+            }
+          }
+        });
+      });
+    </script>
+  </head>
+
+  <body>
+    <div id="viewDiv"></div>
+    <div id="instruction" class="esri-widget">
+      Click on the map to see model prediction.<br>
+      Algorithm: <a href="https://youtu.be/H3EjCKtlVog?si=06OhE9Gpd9axgMfV" target="_blank" rel="noopener noreferrer">
+        sci-kit learn Gaussian Naive Bayes
+      </a>
+    </div>
+  </body>
+</html>
